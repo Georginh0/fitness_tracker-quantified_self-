@@ -1,0 +1,7 @@
+ipykernel
+python-dotenv
+pandas 
+seaborn
+numpy
+matplotlib.pyplot
+-e .cd
