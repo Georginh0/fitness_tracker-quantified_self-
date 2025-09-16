@@ -5,11 +5,15 @@ from glob import glob
 # Read single CSV file
 # --------------------------------------------------------------
 single_file_acc = pd.read_csv(
-    "../../data/raw/MetaMotion/A-bench-heavy2-rpe8_MetaWear_2019-01-11T16.10.08.270_C42732BE255C_Accelerometer_12.500Hz_1.4.4.csv"
+    "../../data/raw/MetaMotion/"
+    "A-bench-heavy2-rpe8_MetaWear_2019-01-11T16.10.08.270_"
+    "C42732BE255C_Accelerometer_12.500Hz_1.4.4.csv"
 )
 
 single_file_gyr = pd.read_csv(
-    "../../data/raw/MetaMotion/A-bench-heavy2-rpe8_MetaWear_2019-01-11T16.10.08.270_C42732BE255C_Gyroscope_25.000Hz_1.4.4.csv"
+    "../../data/raw/MetaMotion/"
+    "A-bench-heavy2-rpe8_MetaWear_2019-01-11T16.10.08.270_"
+    "C42732BE255C_Gyroscope_25.000Hz_1.4.4.csv"
 )
 # --------------------------------------------------------------
 # List all data in data/raw/MetaMotion
@@ -141,7 +145,10 @@ def read_data_from_files(files):
     return (
         acc_df,
         gyr_df,
-    )  # --------------------------------------------------------------
+    )
+
+
+# --------------------------------------------------------------
 
 
 # Merging datasets
@@ -155,21 +162,45 @@ df_merged.columns = [
     "gyr_x",
     "gyr_y",
     "gyr_z",
+    "participant",
     "label",
     "category",
-    "participant",
     "set",
 ]
+
 # --------------------------------------------------------------
 # Resample data (frequency conversion)
 # --------------------------------------------------------------
 
 # Accelerometer:    12.500HZ
 # Gyroscope:        25.000Hz
-df_merged[:1000].resample(rule="S").mean(numeric_only=True)
 
-df_merged.info()
+sampling = {
+    "acc_x": "mean",
+    "acc_y": "mean",
+    "acc_z": "mean",
+    "gyr_x": "mean",
+    "gyr_y": "mean",
+    "gyr_z": "mean",
+    "participant": "last",
+    "label": "last",
+    "category": "last",
+    "set": "last",
+}
 
+
+df_merged[:1000].resample(rule="200ms").apply(sampling)
+
+# --------------------------------------------------------------
+# split by day
+days = [g for n, g in df_merged.groupby(pd.Grouper(freq="D"))]
+data_resampled = pd.concat(
+    [df.resample(rule="200ms").apply(sampling).dropna() for df in days]
+)
+
+data_resampled["set"] = data_resampled["set"].astype(int)
+data_resampled.info()
 # --------------------------------------------------------------
 # Export dataset
 # --------------------------------------------------------------
+data_resampled.to_pickle("../../data//interim/01_data_processed.pkl")
