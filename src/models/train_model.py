@@ -206,31 +206,154 @@ for i, f in zip(range(len(possible_feature_sets)), feature_names):
 # Create a grouped bar plot to compare the results
 # --------------------------------------------------------------
 score_df = score_df.sort_values(by="accuracy", ascending=False)
-print("\nFinal scores:")
-print(score_df)
 
-# Optional: Plot results
-plt.figure(figsize=(12, 6))
-sns.barplot(data=score_df, x="feature_set", y="accuracy", hue="model")
+plt.figure(figsize=(10, 10))
+sns.barplot(x="model", y="accuracy", hue="feature_set", data=score_df)
 plt.title("Model Accuracy by Feature Set")
-plt.xticks(rotation=15)
-plt.tight_layout()
+plt.xlabel("model")
+plt.ylabel("accuracy")
+plt.ylim(0.7, 1.0)
+plt.legend(loc="lower right")
 plt.show()
 # --------------------------------------------------------------
 # Select best model and evaluate results
 # --------------------------------------------------------------
 
+(
+    class_train_y,
+    class_test_y,
+    class_train_prob_y,
+    class_test_prob_y,
+) = learner.random_forest(
+    X_train[feature_set_4], y_train, X_test[feature_set_4], gridsearch=True
+)
 
+accuracy = accuracy_score(y_test, class_test_y)
+
+classes = class_test_prob_y.columns
+cm = confusion_matrix(y_test, class_test_y, labels=classes)
+
+# create confusion matrix for cm
+plt.figure(figsize=(10, 10))
+plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+plt.title("Confusion matrix")
+plt.colorbar()
+tick_marks = np.arange(len(classes))
+plt.xticks(tick_marks, classes, rotation=45)
+plt.yticks(tick_marks, classes)
+
+thresh = cm.max() / 2.0
+for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    plt.text(
+        j,
+        i,
+        format(cm[i, j]),
+        horizontalalignment="center",
+        color="white" if cm[i, j] > thresh else "black",
+    )
+plt.ylabel("True label")
+plt.xlabel("Predicted label")
+plt.grid(False)
+plt.show()
 # --------------------------------------------------------------
 # Select train and test data based on participant
 # --------------------------------------------------------------
+participant_df = df.drop(["category", "set"], axis=1)
+
+X_train = participant_df[participant_df["participant"] != "A"].drop("label", axis=1)
+y_train = participant_df[participant_df["participant"] != "A"]["label"]
 
 
+X_test = participant_df[participant_df["participant"] == "A"].drop("label", axis=1)
+y_test = participant_df[participant_df["participant"] == "A"]["label"]
+
+X_train = X_train.drop(["participant"], axis=1)
+X_test = X_test.drop(["participant"], axis=1)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+df_train["label"].value_counts().plot(
+    kind="bar", ax=ax, color="lightblue", label="Total"
+)
+y_train.value_counts().plot(kind="bar", ax=ax, color="dodgerblue", label="Train")
+y_test.value_counts().plot(kind="bar", ax=ax, color="royalblue", label="Test")
+plt.legend()
+plt.show()
 # --------------------------------------------------------------
 # Use best model again and evaluate results
 # --------------------------------------------------------------
 
+(
+    class_train_y,
+    class_test_y,
+    class_train_prob_y,
+    class_test_prob_y,
+) = learner.random_forest(
+    X_train[feature_set_4], y_train, X_test[feature_set_4], gridsearch=True
+)
 
+accuracy = accuracy_score(y_test, class_test_y)
+
+classes = class_test_prob_y.columns
+cm = confusion_matrix(y_test, class_test_y, labels=classes)
+
+# create confusion matrix for cm
+plt.figure(figsize=(10, 10))
+plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+plt.title("Confusion matrix")
+plt.colorbar()
+tick_marks = np.arange(len(classes))
+plt.xticks(tick_marks, classes, rotation=45)
+plt.yticks(tick_marks, classes)
+
+thresh = cm.max() / 2.0
+for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    plt.text(
+        j,
+        i,
+        format(cm[i, j]),
+        horizontalalignment="center",
+        color="white" if cm[i, j] > thresh else "black",
+    )
+plt.ylabel("True label")
+plt.xlabel("Predicted label")
+plt.grid(False)
+plt.show()
 # --------------------------------------------------------------
 # Try a simpler model with the selected features
 # --------------------------------------------------------------
+(
+    class_train_y,
+    class_test_y,
+    class_train_prob_y,
+    class_test_prob_y,
+) = learner.feedforward_neural_network(
+    X_train[selected_features], y_train, X_test[selected_features], gridsearch=False
+)
+
+accuracy = accuracy_score(y_test, class_test_y)
+
+classes = class_test_prob_y.columns
+cm = confusion_matrix(y_test, class_test_y, labels=classes)
+
+# create confusion matrix for cm
+plt.figure(figsize=(10, 10))
+plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+plt.title("Confusion matrix")
+plt.colorbar()
+tick_marks = np.arange(len(classes))
+plt.xticks(tick_marks, classes, rotation=45)
+plt.yticks(tick_marks, classes)
+
+thresh = cm.max() / 2.0
+for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    plt.text(
+        j,
+        i,
+        format(cm[i, j]),
+        horizontalalignment="center",
+        color="white" if cm[i, j] > thresh else "black",
+    )
+plt.ylabel("True label")
+plt.xlabel("Predicted label")
+plt.grid(False)
+plt.show()
